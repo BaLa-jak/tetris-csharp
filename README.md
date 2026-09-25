@@ -7,6 +7,9 @@ Graficación por Computadora.
 
 - [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - Windows, macOS o Linux (el atlas de texto se genera con SkiaSharp)
+- Sonido con OpenAL: en macOS ya viene con el sistema; en Linux instala `libopenal1`.
+  En Windows instala OpenAL o copia `openal32.dll` (OpenAL Soft) junto al ejecutable.
+  Sin OpenAL el juego funciona igual, solo que en silencio.
 
 ## Compilar y ejecutar
 
@@ -32,18 +35,25 @@ dotnet run
 | Espacio      | Soltar pieza (+2 puntos/fila)   |
 | C            | Saltar pieza (máximo 3 por partida) |
 | P / Esc      | Pausa                           |
+| M            | Silenciar / activar sonido      |
 
 **Puntos:** 1 fila = 100, 2 = 300, 3 = 500, 4 = 800, multiplicado por el nivel.
 **Combos:** cada pieza seguida que borra filas sube el multiplicador (x2, x3… hasta x5);
 se anuncia con un texto animado debajo del tablero. El nivel sube cada 10 líneas.
 
+**Sonidos:** hay efectos al empezar la partida, al colocar una pieza, al borrar filas
+(uno especial para el TETRIS de 4), en los combos (más agudo mientras mayor sea) y al
+terminar. Se generan por código con ondas suaves y volumen moderado, y solo suena un
+efecto por jugada para que no se amontonen.
+
 ## Estructura del proyecto
 
 El código está separado en capas; las dependencias van en un solo sentido:
-`Pantallas → UI / Graficos → Logica`.
+`Pantallas → UI / Graficos / Sonido → Logica`.
 
 - **Logica/**: reglas del juego. No dibuja nada y no conoce la interfaz.
 - **Graficos/**: lo único que usa OpenGL (shaders y dibujo de figuras y bloques).
+- **Sonido/**: lo único que usa OpenAL (efectos generados por código).
 - **UI/**: componentes visuales. Reciben datos de solo lectura y los dibujan.
 - **Pantallas/**: controladores. Leen la lógica, pasan datos a la UI y traducen el teclado.
 
@@ -63,6 +73,9 @@ Logica/RegistroMensajes.cs         Guarda el último mensaje mostrado (carpeta A
 Graficos/GestorShader.cs           Compila los shaders GLSL (forma sólida y texto)
 Graficos/DibujadorCuadros.cs       Dibuja rectángulos, bordes y líneas
 Graficos/DibujadorBloques.cs       Dibuja bloques con relieve y piezas completas
+Sonido/Efecto.cs                   Lista de efectos de sonido
+Sonido/SintetizadorSonidos.cs      Genera cada efecto como audio PCM (ondas suaves)
+Sonido/GestorAudio.cs              OpenAL: reproduce efectos, silencio (M) y modo sin audio
 UI/GeneradorFuenteAtlas.cs         Genera el atlas de letras con SkiaSharp → textura GL
 UI/RenderizadorTexto.cs            Dibuja texto en pantalla
 UI/TemaArcade.cs                   Paleta de colores neón arcade (incluye color de cada pieza)
