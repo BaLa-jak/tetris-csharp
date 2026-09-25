@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Proyecto base del juego TETRIS2D usando C# y OpenTK (OpenGL 4).
+    El paquete SkiaSharp se usa para generar el "atlas" de letras (textura
+    con todos los caracteres) con la que la interfaz dibuja el texto dentro
+    de la ventana de OpenGL. Funciona en Windows, macOS y Linux.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Tetris2D</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Motor grafico: creacion de ventanas, eventos y OpenGL 4 -->
+    <PackageReference Include="OpenTK" Version="4.9.4" />
+    <!-- Generacion del atlas de fuente de texto (multiplataforma) -->
+    <PackageReference Include="SkiaSharp" Version="4.152.1" />
+  </ItemGroup>
+
+</Project>
