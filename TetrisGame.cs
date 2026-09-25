@@ -5,6 +5,7 @@ using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Tetris2D.Graficos;
 using Tetris2D.Pantallas;
+using Tetris2D.Sonido;
 using Tetris2D.UI;
 
 namespace Tetris2D
@@ -23,6 +24,7 @@ namespace Tetris2D
         private GestorShader _shaders = null!;
         private DibujadorCuadros _cuadros = null!;
         private RenderizadorTexto _texto = null!;
+        private GestorAudio _audio = null!;
         private Pantalla _pantalla = null!;
 
         public TetrisGame(GameWindowSettings gws, NativeWindowSettings nws)
@@ -44,6 +46,9 @@ namespace Tetris2D
             _cuadros = new DibujadorCuadros(_shaders);
             _texto = new RenderizadorTexto(_shaders, new GeneradorFuenteAtlas("Arial Black", 48f, true));
 
+            // Audio opcional: si no hay OpenAL el juego sigue en silencio.
+            _audio = new GestorAudio();
+
             // Pantalla inicial: la pantalla de inicio.
             CambiarPantalla(new PantallaInicio(_shaders, _cuadros, _texto));
         }
@@ -55,7 +60,7 @@ namespace Tetris2D
         private void CambiarPantalla(Pantalla nueva)
         {
             nueva.JugarSolicitado += nombre =>
-                CambiarPantalla(new PantallaJuego(_shaders, _cuadros, _texto, nombre));
+                CambiarPantalla(new PantallaJuego(_shaders, _cuadros, _texto, _audio, nombre));
             nueva.MenuSolicitado += () =>
                 CambiarPantalla(new PantallaInicio(_shaders, _cuadros, _texto));
 
@@ -119,6 +124,15 @@ namespace Tetris2D
         protected override void OnKeyDown(KeyboardKeyEventArgs e)
         {
             base.OnKeyDown(e);
+
+            // M silencia en cualquier pantalla, salvo mientras se escribe texto.
+            if (e.Key == MapaControles.TeclaSilenciar && !_pantalla.CapturaTexto)
+            {
+                if (!e.IsRepeat)
+                    _audio.AlternarSilencio();
+                return;
+            }
+
             _pantalla.AlTecla(e.Key);
         }
 
@@ -136,6 +150,7 @@ namespace Tetris2D
 
         protected override void OnUnload()
         {
+            _audio.Dispose();
             _texto.Dispose();
             _cuadros.Dispose();
             _shaders.Dispose();

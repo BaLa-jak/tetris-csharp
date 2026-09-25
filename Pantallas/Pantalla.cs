@@ -38,6 +38,12 @@ namespace Tetris2D.Pantallas
             Texto = texto;
         }
 
+        /// <summary>
+        /// True mientras la pantalla recibe texto escrito (ej. el nombre); en
+        /// ese momento las teclas globales como M (silenciar) no aplican.
+        /// </summary>
+        public virtual bool CapturaTexto => false;
+
         /// <summary>Carga de recursos, se llama una sola vez al crear la pantalla.</summary>
         public virtual void Cargar() { }
 

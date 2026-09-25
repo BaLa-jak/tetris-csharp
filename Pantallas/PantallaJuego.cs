@@ -2,6 +2,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.GraphicsLibraryFramework;
 using Tetris2D.Graficos;
 using Tetris2D.Logica;
+using Tetris2D.Sonido;
 using Tetris2D.UI;
 
 namespace Tetris2D.Pantallas
@@ -19,6 +20,10 @@ namespace Tetris2D.Pantallas
     ///
     /// Distribucion: tablero al centro, la siguiente pieza arriba, el marcador
     /// a la izquierda, la ayuda a la derecha y los combos debajo del tablero.
+    ///
+    /// Sonidos: la partida avisa con eventos y aqui se elige que tocar. Solo
+    /// suena un efecto por jugada (el de mayor prioridad), asi al borrar una
+    /// fila no suena tambien el de pieza colocada.
     /// </summary>
     public class PantallaJuego : Pantalla
     {
@@ -44,15 +49,22 @@ namespace Tetris2D.Pantallas
         private readonly PanelControles _panelControles;
         private readonly PanelMensaje _panelMensaje;
         private readonly TextoAnimado _textoJugada;
+        private readonly GestorAudio _audio;
 
         private PartidaTetris _partida = null!;
         private EstadoPantalla _estado;
         private float _tiempoEstado;   // segundos desde que se entro al estado actual
 
-        public PantallaJuego(GestorShader shaders, DibujadorCuadros cuadros, RenderizadorTexto texto, string jugador)
+        // Efecto de la jugada en curso; se toca al terminar de procesar la tecla o el frame.
+        private Efecto? _efectoPendiente;
+        private int _multiplicadorPendiente;
+
+        public PantallaJuego(GestorShader shaders, DibujadorCuadros cuadros, RenderizadorTexto texto, GestorAudio audio,
+            string jugador)
             : base(shaders, cuadros, texto)
         {
             _jugador = jugador;
+            _audio = audio;
 
             DibujadorBloques bloques = new(cuadros);
             _fondo = new FondoEstrellas(cuadros);
@@ -76,6 +88,8 @@ namespace Tetris2D.Pantallas
         {
             _partida = new PartidaTetris();
             _partida.PuntosObtenidos += AnunciarJugada;
+            _partida.PiezaFijada += () => PedirEfecto(Efecto.PiezaColocada);
+            _partida.PartidaTerminada += () => PedirEfecto(Efecto.FinJuego);
             CambiarEstado(EstadoPantalla.Controles);
         }
 
@@ -83,6 +97,9 @@ namespace Tetris2D.Pantallas
         {
             _estado = estado;
             _tiempoEstado = 0f;
+
+            if (estado == EstadoPantalla.Jugando)
+                _audio.Reproducir(Efecto.InicioPartida);
         }
 
         public override void Actualizar(float dt, Vector2 raton)
@@ -105,6 +122,8 @@ namespace Tetris2D.Pantallas
                         CambiarEstado(EstadoPantalla.Terminado);
                     break;
             }
+
+            EmitirEfectoPendiente();
         }
 
         public override void AlTecla(Keys tecla)
@@ -132,6 +151,8 @@ namespace Tetris2D.Pantallas
                         SolicitarMenu();
                     break;
             }
+
+            EmitirEfectoPendiente();
         }
 
         private static bool EsEnter(Keys tecla) => tecla == Keys.Enter || tecla == Keys.KeyPadEnter;
@@ -143,11 +164,44 @@ namespace Tetris2D.Pantallas
         private void AnunciarJugada(EventoPuntuacion jugada)
         {
             if (jugada.Multiplicador > 1)
+                PedirEfecto(Efecto.Combo, jugada.Multiplicador);
+            else
+                PedirEfecto(jugada.Filas == 4 ? Efecto.Tetris : Efecto.FilaBorrada);
+
+            if (jugada.Multiplicador > 1)
                 _textoJugada.Mostrar($"COMBO x{jugada.Multiplicador}  +{jugada.Puntos}", TemaArcade.Magenta);
             else if (jugada.Filas == 4)
                 _textoJugada.Mostrar($"¡TETRIS!  +{jugada.Puntos}", TemaArcade.Amarillo);
             else
                 _textoJugada.Mostrar($"+{jugada.Puntos}", TemaArcade.Verde);
+        }
+
+        /// <summary>
+        /// Guarda el efecto de la jugada si tiene mas prioridad que el que ya
+        /// estaba pendiente (FinJuego > Combo > Tetris > FilaBorrada > PiezaColocada).
+        /// </summary>
+        private void PedirEfecto(Efecto efecto, int multiplicador = 1)
+        {
+            if (_efectoPendiente is Efecto actual && Prioridad(actual) >= Prioridad(efecto))
+                return;
+            _efectoPendiente = efecto;
+            _multiplicadorPendiente = multiplicador;
+        }
+
+        private static int Prioridad(Efecto efecto) => efecto switch
+        {
+            Efecto.FinJuego => 4,
+            Efecto.Combo => 3,
+            Efecto.Tetris => 2,
+            Efecto.FilaBorrada => 1,
+            _ => 0
+        };
+
+        private void EmitirEfectoPendiente()
+        {
+            if (_efectoPendiente is Efecto efecto)
+                _audio.Reproducir(efecto, _multiplicadorPendiente);
+            _efectoPendiente = null;
         }
 
         public override void Renderizar(float ancho, float alto)

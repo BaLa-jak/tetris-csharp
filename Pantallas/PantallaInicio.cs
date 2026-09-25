@@ -53,6 +53,8 @@ namespace Tetris2D.Pantallas
             _botonVolver.AlPresionar += () => CambiarEstado(EstadoPantalla.Portada);
         }
 
+        public override bool CapturaTexto => _estado == EstadoPantalla.Nombre;
+
         public override void Cargar()
         {
             base.Cargar();

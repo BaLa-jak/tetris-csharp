@@ -39,6 +39,12 @@ namespace Tetris2D.Logica
         /// <summary>Se dispara cada vez que una pieza borra filas.</summary>
         public event Action<EventoPuntuacion>? PuntosObtenidos;
 
+        /// <summary>Se dispara cada vez que una pieza queda fija (antes de PuntosObtenidos).</summary>
+        public event Action? PiezaFijada;
+
+        /// <summary>Se dispara una sola vez, cuando la partida termina.</summary>
+        public event Action? PartidaTerminada;
+
         public Tablero Tablero { get; } = new();
         public Pieza PiezaActual { get; private set; }
         public TipoPieza Siguiente => _generador.Siguiente;
@@ -190,6 +196,7 @@ namespace Tetris2D.Logica
         private void FijarPieza()
         {
             Tablero.Fijar(PiezaActual);
+            PiezaFijada?.Invoke();
             int filas = Tablero.LimpiarFilasCompletas();
 
             if (filas > 0)
@@ -218,7 +225,10 @@ namespace Tetris2D.Logica
             _tiempoCaida = 0f;
 
             if (!Tablero.Cabe(PiezaActual))
+            {
                 Terminada = true;
+                PartidaTerminada?.Invoke();
+            }
         }
     }
 }

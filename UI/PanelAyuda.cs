@@ -30,11 +30,12 @@ namespace Tetris2D.UI
             float teclaAlto = alto * 0.032f;
             float accionAlto = alto * 0.027f;
             float cursorY = y + alto * 0.14f;
+            float paso = alto * 0.84f / Math.Max(1, controles.Count);   // reparte el alto entre los controles
             foreach (DescripcionControl control in controles)
             {
                 _texto.DibujarTexto(control.Tecla, x + margen, cursorY, teclaAlto, TemaArcade.Amarillo);
                 _texto.DibujarTexto(control.Accion, x + margen, cursorY + teclaAlto * 1.2f, accionAlto, TemaArcade.TextoSuave);
-                cursorY += alto * 0.118f;
+                cursorY += paso;
             }
         }
     }

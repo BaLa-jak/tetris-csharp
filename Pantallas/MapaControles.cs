@@ -12,6 +12,12 @@ namespace Tetris2D.Pantallas
   public static class MapaControles
   {
     /// <summary>
+    /// Tecla para activar o desactivar el sonido. No actua sobre la partida,
+    /// por eso la atiende TetrisGame en cualquier pantalla.
+    /// </summary>
+    public const Keys TeclaSilenciar = Keys.M;
+
+    /// <summary>
     /// Un control tal como se muestra en pantalla y la accion de cada una
     /// de sus teclas (ej. IZQ / DER comparten texto pero mueven distinto).
     /// </summary>
@@ -41,7 +47,9 @@ namespace Tetris2D.Pantallas
 
     /// <summary>Textos de los controles, en el orden en que se muestran.</summary>
     public static IReadOnlyList<DescripcionControl> Descripciones { get; } =
-        _controles.Select(c => c.Descripcion).ToArray();
+        _controles.Select(c => c.Descripcion)
+            .Append(new DescripcionControl("M", "Silenciar sonido"))
+            .ToArray();
 
     /// <summary>
     /// Aplica sobre la partida la accion de la tecla presionada.
